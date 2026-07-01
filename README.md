@@ -1,18 +1,18 @@
 ﻿# Hybrid Identity Migration Engineering (IAM-002)
 
-> OmniVerse Enterprise Engineering Portfolio
+**OmniVerse Enterprise Engineering Portfolio**
 
 ## Overview
 
-This project documents an enterprise identity migration and synchronization operations scenario involving cloud-only Microsoft Entra ID accounts, synchronized Active Directory identities, UPN migration, Soft Match, Hard Match, ImmutableID, Microsoft Graph automation, safety checks, validation, and rollback planning.
+This project documents an enterprise identity migration scenario involving cloud-only Microsoft Entra ID accounts, synchronized Active Directory identities, UPN migration, Soft Match, Hard Match, ImmutableID, Microsoft Graph automation, validation, and rollback planning.
 
-IAM-002 builds directly on IAM-001 by using the hybrid identity platform established with Microsoft Entra Connect.
+IAM-002 builds on the hybrid identity platform established in IAM-001 by focusing specifically on migration engineering and identity matching.
 
 ## Business Scenario
 
-OmniVerse Enterprises recently acquired another organization that already had Microsoft 365 cloud-only accounts created before identity synchronization was standardized.
+OmniVerse Enterprises acquired an organization that already had Microsoft 365 cloud-only accounts before identity synchronization was standardized.
 
-The migration objective was to merge existing cloud-only identities with synchronized Active Directory identities without losing mailboxes, licenses, Teams data, OneDrive data, or creating duplicate accounts.
+The objective was to merge existing cloud identities with synchronized Active Directory identities while preserving Microsoft 365 access, licenses, mailboxes, Teams data, OneDrive data, and user continuity.
 
 ## Environment
 
@@ -45,111 +45,202 @@ Microsoft Entra ID User
 Validated Hybrid Identity
 ```
 
-## Migration Strategy
+## Migration Walkthrough
 
-The migration followed a controlled phased approach:
+### 1. Microsoft Entra Identity Audit
+Before any migration activity, Microsoft Entra ID was audited to establish the current cloud identity state.
 
-1. Discover all AD and Microsoft Entra identities
-2. Classify users into migration buckets
-3. Identify cloud-only accounts
-4. Detect duplicate synchronized objects
-5. Prepare UPN, mail, and proxyAddresses
-6. Perform Soft Match when possible
-7. Perform Hard Match when Soft Match fails
-8. Validate ImmutableID and sync state
-9. Confirm licenses and account state
-10. Log every action to CSV
+**Result:** Tenant successfully reviewed.
 
-## Phase 1 — Discovery and Identity Audit
+![Microsoft Entra Identity Audit](screenshots/01-Entra-Identity-Audit.png)
 
-Discovery identifies all Active Directory and Microsoft Entra users and classifies each account by synchronization state, UPN, mail, proxyAddresses, license state, and ImmutableID.
+---
 
-## Phase 2 — UPN Migration
+### 2. Migration Pilot Organizational Unit
+A dedicated Migration Pilot OU was created in Active Directory.
 
-UPNs are standardized from a legacy suffix to the target enterprise suffix before synchronization or matching.
+**Result:** Pilot OU created.
 
-## Phase 3 — Soft Match
+![Migration Pilot OU](screenshots/01-Migration-Pilot-OU.png)
 
-Soft Match is attempted when the on-premises AD account and the cloud account share matching UPN, mail, or SMTP/proxyAddresses values.
+---
 
-## Phase 4 — Hard Match
+### 3. Soft Match Candidate Review
+Soft Match candidates were reviewed using UPN, mail, and proxyAddresses.
 
-Hard Match is used when Soft Match cannot safely join the objects. The AD user's ObjectGUID is converted to a Base64 ImmutableID value and assigned to the correct cloud identity using Microsoft Graph.
+**Result:** Soft Match candidates identified.
 
-## Phase 5 — Batch Automation
+![Soft Match Candidate](screenshots/02-Soft-Match-Candidate.png)
 
-After manual pilot validation, the workflow is scaled to batches using safety checks and CSV-driven automation.
+---
 
-## Phase 6 — Validation
+### 4. Hard Match Candidate Review
+ObjectGUID converted to ImmutableID and applied to cloud objects.
 
-Final validation confirms:
+**Result:** Hard Match candidates prepared.
 
-- Cloud account still exists
-- ImmutableID is assigned
-- OnPremisesSyncEnabled is true
-- AccountEnabled is true
-- Licenses are preserved
-- Duplicate objects are removed
-- No unexpected errors occurred
+![Hard Match Candidate](screenshots/03-Hard-Match-Candidate.png)
+
+---
+
+### 5. Disabled Review Candidate
+Disabled cloud accounts reviewed to prevent conflicts.
+
+**Result:** Disabled candidates identified.
+
+![Disabled Review Candidate](screenshots/04-Disabled-Review-Candidate.png)
+
+---
+
+### 6. Cloud-Only User Review
+Cloud-only users classified for migration.
+
+**Result:** Cloud-only accounts classified.
+
+![Cloud Only User](screenshots/05-Cloud-Only-User.png)
+
+---
+
+### 7. Discovery Classification
+Users classified into migration buckets.
+
+**Result:** Classification completed.
+
+![Discovery Classification](screenshots/06-IAM002-Discovery-Classification.png)
+
+---
+
+### 8. Pre-Flight Health Check
+Graph connectivity, sync scheduler, DNS, and duplicate attributes validated.
+
+**Result:** Environment ready.
+
+![PreFlight Health Check](screenshots/07-PreFlight-Health-Check.png)
+
+---
+
+### 9. Hard Match Two-Object Pattern
+Demonstrates cloud + AD duplicate identity pattern.
+
+**Result:** Strategy preserved cloud identity.
+
+![Hard Match Two Object Pattern](screenshots/08-Hard-Match-Two-Object-Pattern.png)
+
+---
+
+### 10. Hard Match Pilot Success
+Pilot Hard Match validated migration logic.
+
+**Result:** Pilot user matched.
+
+![Hard Match Pilot Success](screenshots/09-Hard-Match-Pilot-Success.png)
+
+---
+
+### 11. Hard Match Batch Summary
+Final batch processed 40 users.
+
+**Result:** 38 migrated, 2 skipped.
+
+![Hard Match Batch Summary](screenshots/10-Hard-Match-Batch-Summary.png)
+
+---
+
+### 12. Post-Migration Validation
+Validated ImmutableID, sync state, and account health.
+
+**Result:** 40/40 PASS.
+
+![Post Migration Validation](screenshots/11-Post-Migration-Validation.png)
+
+---
+
+### 13. Rollback Validation
+Rollback procedure validated.
+
+**Result:** Rollback PASS.
+
+![Rollback Validation](screenshots/12-Rollback-Validation.png)
+
+---
 
 ## PowerShell Automation
 
 | Script | Purpose |
-|---|---|
-| `01-Identity-Audit.ps1` | Exports AD and Entra identity data for migration planning |
-| `02-UPN-Migration.ps1` | Performs controlled UPN updates from legacy to target suffix |
-| `03-Soft-Match-Prep.ps1` | Prepares attributes required for Soft Match |
-| `04-Hard-Match-ImmutableID.ps1` | Converts ObjectGUID to ImmutableID and applies it with Graph |
-| `05-Batch-Migration.ps1` | Batch migration framework with safety checks and CSV logging |
-| `06-Validation.ps1` | Validates final migrated identity state |
-| `07-Rollback.ps1` | Documents rollback support actions |
+|--------|---------|
+| 01-Identity-Audit.ps1 | Export identity data |
+| 02-UPN-Migration.ps1 | Controlled UPN updates |
+| 03-Soft-Match-Prep.ps1 | Prepare Soft Match |
+| 03-HardMatch-Batch-Final.ps1 | Execute Hard Match batch |
+| 04-Hard-Match-ImmutableID.ps1 | Convert ObjectGUID → ImmutableID |
+| 05-Batch-Migration.ps1 | Batch migration framework |
+| 06-Validation.ps1 | Validate migrated identities |
+| 07-Rollback.ps1 | Rollback documentation |
+
+## Final Results
+
+| Metric | Result |
+|--------|--------|
+| Pilot Users | 40 |
+| Successful Migrations | 38 |
+| Skipped | 2 |
+| Warnings | 0 |
+| Errors | 0 |
+| Validation | 40/40 PASS |
+| Rollback | PASS |
 
 ## Troubleshooting Scenarios
 
-This project covers common hybrid identity migration issues:
+* Cloud-only accounts  
+* Duplicate objects  
+* Duplicate UPN values  
+* Duplicate proxyAddresses  
+* Missing mail attributes  
+* Incorrect ImmutableID  
+* Soft Match failure  
+* Hard Match requirement  
+* Deleted object conflicts  
+* Graph PATCH errors  
+* Sync scope behavior  
+* Export validation  
 
-- Cloud-only accounts
-- Duplicate synchronized objects
-- Duplicate UPN
-- Duplicate proxyAddresses
-- Missing mail attribute
-- Incorrect ImmutableID
-- Soft Match failure
-- Hard Match requirement
-- Recycle bin duplicate cleanup
-- Sync export validation
+## Lessons Learned
+
+* Pre-flight checks reduce risk  
+* Deleted cloud objects block ImmutableID  
+* Hard Match requires duplicate cleanup  
+* Graph timing affects validation  
+* Pilot migrations reduce risk  
+* Rollback must be documented  
 
 ## Skills Demonstrated
 
-- Microsoft Entra ID
-- Active Directory
-- Microsoft Entra Connect
-- Microsoft Graph PowerShell
-- Soft Match
-- Hard Match
-- ImmutableID
-- ObjectGUID conversion
-- UPN migration
-- Duplicate attribute troubleshooting
-- Batch automation
-- CSV logging
-- Safety checks
-- Rollback planning
-- Enterprise identity migration documentation
+* Microsoft Entra ID  
+* Active Directory  
+* Microsoft Entra Connect  
+* Microsoft Graph  
+* Soft Match / Hard Match  
+* ImmutableID  
+* UPN migration  
+* Duplicate troubleshooting  
+* Batch automation  
+* CSV logging  
+* Rollback planning  
+* Enterprise migration documentation  
 
 ## Project Outcome
 
-This project demonstrates how to plan and execute an enterprise identity migration from cloud-only Microsoft 365 accounts into a synchronized hybrid identity model while preserving access, licensing, mailbox continuity, and user data.
+Successfully migrated cloud-only Microsoft 365 identities into synchronized hybrid identity while preserving access and minimizing risk.
 
 ## Future Enhancements
 
-- Automated test harness
-- Advanced Graph reporting
-- License preservation report
-- Teams and OneDrive validation
-- ServiceNow migration change record
-- Sentinel monitoring for identity migration events
+* Automated test harness  
+* Advanced Graph reporting  
+* License preservation  
+* Teams / OneDrive validation  
+* ServiceNow change record  
+* Sentinel identity monitoring  
 
 ## Created By
 
-Keshawn Lynch
+**Keshawn Lynch**
